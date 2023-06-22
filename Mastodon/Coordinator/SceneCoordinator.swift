@@ -30,6 +30,7 @@ final public class SceneCoordinator {
     private(set) weak var splitViewController: RootSplitViewController?
     
     private(set) var secondaryStackHashValues = Set<Int>()
+    var childCoordinator: Coordinator?
     
     init(
         scene: UIScene,
@@ -137,6 +138,7 @@ extension SceneCoordinator {
         case safariPresent(animated: Bool, completion: (() -> Void)? = nil)
         case alertController(animated: Bool, completion: (() -> Void)? = nil)
         case activityViewControllerPresent(animated: Bool, completion: (() -> Void)? = nil)
+        case none
     }
     
     enum Scene {
@@ -178,7 +180,7 @@ extension SceneCoordinator {
         case followedTags(viewModel: FollowedTagsViewModel)
 
         // setting
-        case settings(viewModel: SettingsViewModel)
+        case settings
         
         // report
         case report(viewModel: ReportViewModel)
@@ -262,7 +264,7 @@ extension SceneCoordinator {
     @MainActor
     @discardableResult
     func present(scene: Scene, from sender: UIViewController? = nil, transition: Transition) -> UIViewController? {
-        guard let viewController = get(scene: scene) else {
+        guard let viewController = get(scene: scene, from: sender) else {
             return nil
         }
         guard var presentingViewController = sender ?? sceneDelegate.window?.rootViewController?.topMost else {
@@ -291,6 +293,9 @@ extension SceneCoordinator {
         }
         
         switch transition {
+        case .none:
+            // do nothing
+            break
         case .show:
             presentingViewController.show(viewController, sender: sender)
         case .showDetail:
@@ -372,7 +377,7 @@ extension SceneCoordinator {
 
 private extension SceneCoordinator {
     
-    func get(scene: Scene) -> UIViewController? {
+    func get(scene: Scene, from sender: UIViewController? = nil) -> UIViewController? {
         let viewController: UIViewController?
         
         switch scene {
@@ -522,10 +527,15 @@ private extension SceneCoordinator {
             activityViewController.popoverPresentationController?.sourceView = sourceView
             activityViewController.popoverPresentationController?.barButtonItem = barButtonItem
             viewController = activityViewController
-        case .settings(let viewModel):
-            let _viewController = SettingsViewController()
-            _viewController.viewModel = viewModel
-            viewController = _viewController
+        case .settings:
+            guard let presentedOn = sender else { return nil }
+
+            let settingsCoordinator = SettingsCoordinator(presentedOn: presentedOn)
+            settingsCoordinator.start()
+
+            viewController = settingsCoordinator.navigationController
+            childCoordinator = settingsCoordinator
+
         case .editStatus(let viewModel):
             let composeViewController = ComposeViewController(viewModel: viewModel)
             viewController = composeViewController

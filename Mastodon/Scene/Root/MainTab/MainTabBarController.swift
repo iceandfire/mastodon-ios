@@ -690,11 +690,11 @@ extension MainTabBarController {
     }
     
     @objc private func openSettingsKeyCommandHandler(_ sender: UIKeyCommand) {
-        os_log(.info, log: .debug, "%{public}s[%{public}ld], %{public}s", ((#file as NSString).lastPathComponent), #line, #function)
-        guard let authContext = self.authContext else { return }
-        guard let setting = context.settingService.currentSetting.value else { return }
-        let settingsViewModel = SettingsViewModel(context: context, authContext: authContext, setting: setting)
-        _ = coordinator.present(scene: .settings(viewModel: settingsViewModel), from: nil, transition: .modal(animated: true, completion: nil))
+
+        guard let authContext,
+                let setting = context.settingService.currentSetting.value else { return }
+
+        _ = coordinator.present(scene: .settings, from: nil, transition: .none)
     }
     
     @objc private func composeNewPostKeyCommandHandler(_ sender: UIKeyCommand) {
