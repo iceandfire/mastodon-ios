@@ -6,10 +6,16 @@ protocol Coordinator {
     func start()
 }
 
+protocol SettingsCoordinatorDelegate: AnyObject {
+    func logout(_ settingsCoordinator: SettingsCoordinator)
+}
+
 class SettingsCoordinator: Coordinator {
 
     let navigationController: UINavigationController
     let presentedOn: UIViewController
+
+    weak var delegate: SettingsCoordinatorDelegate?
 
     private let settingsViewController: SettingsViewController
 
@@ -47,9 +53,8 @@ extension SettingsCoordinator: SettingsViewControllerDelegate {
         case .supportMastodon:
             break
             // present support-screen
-        case .logout(let accountName):
-            break
-            // show logout-sheet
+        case .logout(_):
+            delegate?.logout(self)
         }
     }
 

@@ -531,6 +531,7 @@ private extension SceneCoordinator {
             guard let presentedOn = sender else { return nil }
 
             let settingsCoordinator = SettingsCoordinator(presentedOn: presentedOn)
+            settingsCoordinator.delegate = self
             settingsCoordinator.start()
 
             viewController = settingsCoordinator.navigationController
@@ -555,11 +556,43 @@ private extension SceneCoordinator {
 //MARK: - MastodonLoginViewControllerDelegate
 
 extension SceneCoordinator: MastodonLoginViewControllerDelegate {
-  func backButtonPressed(_ viewController: MastodonLoginViewController) {
-    viewController.navigationController?.popViewController(animated: true)
-  }
+    func backButtonPressed(_ viewController: MastodonLoginViewController) {
+        viewController.navigationController?.popViewController(animated: true)
+    }
 
-  func nextButtonPressed(_ viewController: MastodonLoginViewController) {
-    viewController.login()
-  }
+    func nextButtonPressed(_ viewController: MastodonLoginViewController) {
+        viewController.login()
+    }
+}
+
+//MARK: - SettingsCoordinatorDelegate
+extension SceneCoordinator: SettingsCoordinatorDelegate {
+    func logout(_ settingsCoordinator: SettingsCoordinator) {
+        let alertController = UIAlertController(
+            title: L10n.Common.Alerts.SignOut.title,
+            message: L10n.Common.Alerts.SignOut.message,
+            preferredStyle: .actionSheet
+        )
+
+        let cancelAction = UIAlertAction(title: L10n.Common.Controls.Actions.cancel, style: .cancel)
+        let signOutAction = UIAlertAction(title: L10n.Common.Alerts.SignOut.confirm, style: .destructive) { [weak self] _ in
+            guard let self = self, let authContext else { return }
+
+            self.appContext.notificationService.clearNotificationCountForActiveUser()
+
+            Task { @MainActor in
+                try await self.appContext.authenticationService.signOutMastodonUser(
+                    authenticationBox: authContext.mastodonAuthenticationBox
+                )
+
+                self.setup()
+            }
+
+        }
+        alertController.addAction(cancelAction)
+        alertController.addAction(signOutAction)
+
+        settingsCoordinator.navigationController.present(alertController, animated: true)
+
+    }
 }
