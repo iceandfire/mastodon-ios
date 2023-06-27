@@ -2,10 +2,6 @@
 
 import UIKit
 
-protocol Coordinator {
-    func start()
-}
-
 protocol SettingsCoordinatorDelegate: AnyObject {
     func logout(_ settingsCoordinator: SettingsCoordinator)
 }
