@@ -182,7 +182,7 @@ extension SceneCoordinator {
         case followedTags(viewModel: FollowedTagsViewModel)
 
         // setting
-        case settings
+        case settings(setting: Setting)
         
         // report
         case report(viewModel: ReportViewModel)
@@ -529,12 +529,14 @@ private extension SceneCoordinator {
             activityViewController.popoverPresentationController?.sourceView = sourceView
             activityViewController.popoverPresentationController?.barButtonItem = barButtonItem
             viewController = activityViewController
-        case .settings:
+        case .settings(let setting):
             guard let presentedOn = sender,
                   let accountName = authContext?.mastodonAuthenticationBox.authenticationRecord.object(in: appContext.managedObjectContext)?.username
             else { return nil }
 
-            let settingsCoordinator = SettingsCoordinator(presentedOn: presentedOn, accountName: accountName)
+            let settingsCoordinator = SettingsCoordinator(presentedOn: presentedOn,
+                                                          accountName: accountName,
+                                                          setting: setting)
             settingsCoordinator.delegate = self
             settingsCoordinator.start()
 
